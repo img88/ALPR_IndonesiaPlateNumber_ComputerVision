@@ -8,7 +8,7 @@ from tensorflow import keras
 # Preproccessing
 #------------------------------------------------------
 
-img = cv.imread(r'E:\PYTHON\Thesis siap upload\test images\AA5627JT.jpg') # load an image
+img = cv.imread(r'E:\test images\AA5627JT.jpg') # load an image
 img = cv.resize(img, (int(img.shape[1]*.4),int(img.shape[0]*.4))) # resizing the image
 im_gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY) # convert bgr to grayscale
 
