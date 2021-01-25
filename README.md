@@ -20,7 +20,7 @@ For image classification, I follow [this instruction](https://www.tensorflow.org
 - Open mainProgram.py
 - Change the test image path with the same requirement image
 
-## Retraining
+## Retrain
 - Unzip dataset.zip
 - Open Training.py
 - Change train dataset folder path
