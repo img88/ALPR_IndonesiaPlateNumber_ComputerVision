@@ -5,7 +5,7 @@ Automatic License Plate Recognition for Indonesia Plate Number
 Plate detection and character segmentation on vehicle images are using contours.<br>
 For image classification, I follow [this instruction](https://www.tensorflow.org/tutorials/images/classification)
 
-## Prerequest
+## Requirement
 - Python 3.8.6
 - OpenCV 4.5.1
 - NumPy 1.19.4
