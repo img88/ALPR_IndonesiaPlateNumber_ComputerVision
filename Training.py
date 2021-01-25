@@ -9,7 +9,7 @@ from tensorflow.keras.models import Sequential
 # I follow this instruction for image classification: 
 # https://www.tensorflow.org/tutorials/images/classification
 
-data_dir = r'E:\PYTHON\Thesis siap upload\dataset' # training dataset folder
+data_dir = r'E:\PYTHON\dataset' # training dataset folder
 
 batch_size = 32
 img_height = 40
