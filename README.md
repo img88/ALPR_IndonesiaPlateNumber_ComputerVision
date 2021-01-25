@@ -24,4 +24,4 @@ For image classification, I follow [this instruction](https://www.tensorflow.org
 - Unzip dataset.zip
 - Open Training.py
 - Change train dataset folder path
-- You can add another character dataset to dataset folder for better result
+- You can add another character dataset to the dataset folder for better result
