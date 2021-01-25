@@ -14,7 +14,7 @@ For image classification, I follow [this instruction](https://www.tensorflow.org
 ## Test Image Requirement
 - Resolution 2560 x 1920
 - Daylight
-- The vehicle is 1+- meter from the camera
+- The vehicle is +- 1 meter from the camera
 
 ## How to Run
 - Open mainProgram.py
