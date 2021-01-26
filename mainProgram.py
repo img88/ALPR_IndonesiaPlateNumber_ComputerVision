@@ -51,7 +51,7 @@ if len(idxs) == 1:
     im_plate = im_gray[yp:yp+hp, xp:xp+wp]
 else:
     print(' more than one plate detected, save the second box')
-    xp,yp,wp,hp = cv.boundingRect(contours[index[1]])
+    xp,yp,wp,hp = cv.boundingRect(contours[idxs[1]])
     cv.rectangle(img,(xp,yp),(xp+wp,yp+hp),(0,255,0),5)
     im_plate = im_gray[yp:yp+hp, xp:xp+wp]
 
