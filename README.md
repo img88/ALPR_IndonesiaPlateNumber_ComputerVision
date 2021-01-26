@@ -3,7 +3,7 @@ Automatic License Plate Recognition for Indonesia Plate Number<br>
 
 ## Method
 Plate detection and characters segmentation on vehicle images are using contours.<br>
-For image/character classification, I follow [this instruction](https://www.tensorflow.org/tutorials/images/classification)
+For images/characters classification, I follow [this instruction](https://www.tensorflow.org/tutorials/images/classification)
 
 ### Result
 - 58/62 plates detected
