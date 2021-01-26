@@ -6,7 +6,7 @@ Plate detection and character segmentation on vehicle images are using contours.
 For image/character classification, I follow [this instruction](https://www.tensorflow.org/tutorials/images/classification)
 
 Suggestion:
-- For better detection results, you can do experiments with preprocessing and contours.<br>
+- For better detection results, you can do some experiments with preprocessing and contours.<br>
 - For better classification result, you can separate the plate number character into three parts, first letter, second number, and third letter;<br>
 - And you can add more training datasets. 
 
