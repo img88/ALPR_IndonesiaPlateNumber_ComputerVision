@@ -2,16 +2,16 @@
 Automatic License Plate Recognition for Indonesia Plate Number<br>
 
 ## Method
-Plate detection and character segmentation on vehicle images are using contours.<br>
+Plate detection and characters segmentation on vehicle images are using contours.<br>
 For image/character classification, I follow [this instruction](https://www.tensorflow.org/tutorials/images/classification)
 
 ### Result
 - 58/62 plates detected
-- Sometimes get wrong classification result, examples: 1 <--> T, 2 <--> Z
+- Sometimes get wrong classification result for similar shaped characters, examples: 1 <--> T <--> I, 2 <--> Z
 
 ### Suggestion:
-- For better detection results, you can do some experiments with preprocessing and contours.<br>
-- For better classification result, you can separate the plate number character into three parts, first letter, second number, and third letter;<br>
+- For better detection result, you can do some experiments with preprocessing and contours.<br>
+- For better classification result, you can separate the plate number characters into three parts, the first letter, the second number, and the third letter;<br>
 - And you can add more training datasets. 
 
 ### Good Result
