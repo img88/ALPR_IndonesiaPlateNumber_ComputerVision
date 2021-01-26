@@ -48,6 +48,7 @@ For image/character classification, I follow [this instruction](https://www.tens
 - Resolution 2560 x 1920
 - Daylight
 - The vehicle is +- 1 meter from the camera
+- I give you 5 test images
 
 ## How to Run
 - Open mainProgram.py
