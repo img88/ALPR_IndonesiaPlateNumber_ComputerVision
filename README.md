@@ -7,7 +7,7 @@ For image/character classification, I follow [this instruction](https://www.tens
 
 Suggestion:
 - For better detection results, you can do experiments with preprocessing and contours.<br>
-- For better classification result, you can separate the plate number character into three parts, first letter, the second number, and third letter;<br>
+- For better classification result, you can separate the plate number character into three parts, first letter, second number, and third letter;<br>
 - And you can add more training datasets. 
 
 ### Good Result
