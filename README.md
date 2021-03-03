@@ -35,7 +35,6 @@ Automatic License Plate Recognition for Indonesia Plate Number<br>
 
 <p align="center">
   <img src="https://user-images.githubusercontent.com/56859155/105787785-c1c9a580-5fb1-11eb-8d71-4555b1aadf15.jpg"/>
-  <img src="https://user-images.githubusercontent.com/56859155/105787797-c5f5c300-5fb1-11eb-8e6b-12ef7b108ab1.jpg"/>
   <img src="https://user-images.githubusercontent.com/56859155/105787801-c68e5980-5fb1-11eb-89e4-84bf50d802ae.jpg"/>
 </p>
 
