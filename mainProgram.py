@@ -1,187 +1,442 @@
 import cv2 as cv
 import numpy as np
-import tensorflow as tf
+from matplotlib import pyplot as plt
 import os
+import tensorflow as tf
 from tensorflow import keras
 
+#---------------------------------------------------------------
+# █▀▀█ █▀▀█ █▀▀█ █▀▀█ █▀▀ █▀▀▄ █▀▀▀ █▀▀█ █░░ █▀▀█ █░░█ █▀▀█ █▀▀▄ 
+# █░░█ █▄▄▀ █▄▄█ █░░█ █▀▀ █░░█ █░▀█ █░░█ █░░ █▄▄█ █▀▀█ █▄▄█ █░░█ 
+# █▀▀▀ ▀░▀▀ ▀░░▀ █▀▀▀ ▀▀▀ ▀░░▀ ▀▀▀▀ ▀▀▀▀ ▀▀▀ ▀░░▀ ▀░░▀ ▀░░▀ ▀░░▀
+#---------------------------------------------------------------
+
+# load citra RGB (BGR)
+img = cv.imread(r'E:\PYTHON\Final Project\test images\AA5627JT.jpg')
+
+# resize citra dengan mengalikannya ukuran aslinya dengan 0.4
+# contoh: 1920 x 2560 ==> 1920 x 0.4 = 768 ; 2560 x 0.4 = 1024 ==> hasilnya 768 x 1024
+# img.shape[1] = kolom/lebar ; img.shape[0] = baris/tinggi
+img = cv.resize(img, (int(img.shape[1]*.4),int(img.shape[0]*.4)))
+
+# konversi dari BGR ke grayscale
+img_gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY) # convert bgr to grayscale
+
+# Normalisasi Cahaya
+# citra kendaraan memiliki intensitas cahaya yang berbeda-beda maka normalkan terlebih dahulu
+# cara menormalkan intensitas cahaya: 
+# 1. lakukan operasi opening di citra gray
+# 2. lakukan pengurangan citra gray dengan citra hasil opening
+# 3. citra hasil normalisasi bisa diubah ke citra BW (hitam putih) dengan pengambangan Otsu
+
+# buat kernel dengan bentuk ellipse, diameter 20 piksel
+kernel = cv.getStructuringElement(cv.MORPH_ELLIPSE,(20,20))
+
+# Normalisasi cahaya (1) 
+# lakukan operasi opening ke citra grayscale dengan kernel yang sudah dibuat (var: kernel)
+img_opening = cv.morphologyEx(img_gray, cv.MORPH_OPEN, kernel)
+
+# Normalisasi cahaya (2)
+# lakukan pengurangan citra grayscale dengan citra hasil opening
+img_norm = img_gray - img_opening
+
+# Normalisasi cahaya (3)
+# konversi citra hasil normalisasi ke citra BW (hitam putih)
+(thresh, img_norm_bw) = cv.threshold(img_norm, 0, 255, cv.THRESH_BINARY + cv.THRESH_OTSU)
+
+# # ==== Cek normalisasi START ====
+# # Untuk ngecek hasil sebelum dan sesudah dilakukan normalisasi
+# # Bisa di comment/uncomment
+
+# # buat citra bw tanpa normalisasi
+# (thresh, img_without_norm_bw) = cv.threshold(img_gray, 0, 255, cv.THRESH_BINARY + cv.THRESH_OTSU)
+
+# fig = plt.figure(figsize=(10, 7)) 
+# row_fig = 1
+# column_fig = 3
+
+# fig.add_subplot(row_fig, column_fig, 1)
+# plt.imshow(img_gray, cmap='gray')
+# plt.axis('off')
+# plt.title("Grayscale")
+
+# fig.add_subplot(row_fig, column_fig, 2)
+# plt.imshow(img_without_norm_bw, cmap='gray')
+# plt.axis('off')
+# plt.title("Tanpa Normalisasi")
+
+# fig.add_subplot(row_fig, column_fig, 3)
+# plt.imshow(img_norm_bw, cmap='gray')
+# plt.axis('off')
+# plt.title("Dengan Normalisasi")
+
+# plt.show()
+
+# # ==== Cek normalisasi FINISH ====
+
 #------------------------------------------------------
-# Preproccessing
+# █▀▀▄ █▀▀ ▀▀█▀▀ █▀▀ █░█ █▀▀ ░▀░ 　 █▀▀█ █░░ █▀▀█ ▀▀█▀▀ 
+# █░░█ █▀▀ ░░█░░ █▀▀ █▀▄ ▀▀█ ▀█▀ 　 █░░█ █░░ █▄▄█ ░░█░░ 
+# ▀▀▀░ ▀▀▀ ░░▀░░ ▀▀▀ ▀░▀ ▀▀▀ ▀▀▀ 　 █▀▀▀ ▀▀▀ ▀░░▀ ░░▀░░
 #------------------------------------------------------
 
-img = cv.imread(r'E:\PYTHON\test images\AA5627JT.jpg') # load an image
-img = cv.resize(img, (int(img.shape[1]*.4),int(img.shape[0]*.4))) # resizing the image
-im_gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY) # convert bgr to grayscale
+# Deteksi plat menggunakan contours
 
-# Vehicle images have different illumination level, let's normalize it
+# dapatkan contours dari citra kendaraan
+contours_vehicle, hierarchy = cv.findContours(img_norm_bw, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE) # get the contour for every area
 
-kernel = cv.getStructuringElement(cv.MORPH_ELLIPSE,(20,20)) # create kernel/structuring element, shape = ellipse, diameter = 20 pixel
-im_open = cv.morphologyEx(im_gray, cv.MORPH_OPEN, kernel) # apply morph open with kernel above, opening = erode->dilate
-im_subs = im_gray - im_open # substract those images
-(thresh, im_bw) = cv.threshold(im_subs, 0, 255, cv.THRESH_BINARY + cv.THRESH_OTSU) # convert from grayscale to black and white using otsu's thresholding
+# cek jumlah contours
+# print(len(contours))
 
-#------------------------------------------------------
-# Plate Detection
-#------------------------------------------------------
+# index contour yang berisi kandidat plat nomor
+index_plate_candidate = []
 
-# Plate detection using contours
+# index counter dari setiap contour di contours_vehichle
+index_counter_contour_vehicle = 0
 
-contours, hierarchy = cv.findContours(im_bw, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE) # get the contour for every area
-index = 0 # counter index of cnt in contours
-idxs = [] # index of cnt in contours that contains plate location candidate 
+# filter setiap contour untuk mendapatkan kandidat plat nomor
+for contour_vehicle in contours_vehicle:
+    
+    # dapatkan posisi x, y, nilai width, height, dari contour
+    x,y,w,h = cv.boundingRect(contour_vehicle)
 
-for cnt in contours:
-    x,y,w,h = cv.boundingRect(cnt) # get the x, y, width, height values from cnt in contours
-    aspect_ratio = w/h # calculate the aspect ratio
-    # get the plate location candidate if pixel width more than or equal to 200 pixels and aspect ratio less than or equal to 4
+    # dapatkan nilai aspect rationya
+    aspect_ratio = w/h
+
+    # dapatkan kandidat plat nomornya apabila:
+    # 1. lebar piksel lebih dari atau sama dengan 200 piksel
+    # 2. aspect rationya kurang dari atau sama dengan 4
     if w >= 200 and aspect_ratio <= 4 : 
-        idxs.append(index) # get the index value of contours that contain plate location candidate
-    index += 1
+        
+        # dapatkan index kandidat plat nomornya
+        index_plate_candidate.append(index_counter_contour_vehicle)
+    
+    # increment index counter dari contour
+    index_counter_contour_vehicle += 1
 
-# Get plate number location
-#   in my experiment, we can get one or two plate locations
-#   if we get one, that is the plate number
-#   if we get two, the second location is the plate number with a smaller size
-#   the plate number will be stored to im_plate by cropping im_gray
+# Dapatkan lokasi plat nomornya:
+#   berdasarkan eksperimen, kita bisa mendapatkan satu atau dua lokasi plat
+#   jika mendapatkan dua lokasi plat, berdasarkan observasi, pilih plat kedua karena ukurannya yang lebih pas
+#
 
-for a in idxs:
-    xp,yp,wp,hp = cv.boundingRect(contours[a])
+# buat duplikat citra RGB kendaraan untuk menampilkan lokasi plat
+img_show_plate = img.copy() 
 
-if len(idxs) == 1: 
-    cv.rectangle(img,(xp,yp),(xp+wp,yp+hp),(0,255,0),5)
-    im_plate = im_gray[yp:yp+hp, xp:xp+wp]
+if len(index_plate_candidate) == 0:
+
+    # tampilkan peringatan plat nomor tidak terdeteksi
+    print("Plat nomor tidak ditemukan")
+
+# jika jumlah kandidat plat sama dengan 1
+elif len(index_plate_candidate) == 1:
+
+    # dapatkan lokasi untuk pemotongan citra plat
+    x_plate,y_plate,w_plate,h_plate = cv.boundingRect(contours_vehicle[index_plate_candidate[0]])
+    
+    # gambar kotak lokasi plat nomor di citra RGB
+    cv.rectangle(img_show_plate,(x_plate,y_plate),(x_plate+w_plate,y_plate+h_plate),(0,255,0),5)
+
+    # crop citra plat 
+    img_plate_gray = img_gray[y_plate:y_plate+h_plate, x_plate:x_plate+w_plate]
 else:
-    print(' more than one plate detected, save the second box')
-    xp,yp,wp,hp = cv.boundingRect(contours[idxs[1]])
-    cv.rectangle(img,(xp,yp),(xp+wp,yp+hp),(0,255,0),5)
-    im_plate = im_gray[yp:yp+hp, xp:xp+wp]
+    print('Dapat dua lokasi plat, pilih lokasi plat kedua')
 
-#------------------------------------------------------
-# Character Segmentation
-#------------------------------------------------------
+    # dapatkan lokasi untuk pemotongan citra plat
+    x_plate,y_plate,w_plate,h_plate = cv.boundingRect(contours_vehicle[index_plate_candidate[1]])
 
-(thresh, im_bw) = cv.threshold(im_plate, 0, 255, cv.THRESH_BINARY + cv.THRESH_OTSU) # convert from grayscale to black and white
-kernel = cv.getStructuringElement(cv.MORPH_CROSS, (3,3)) # create kernel, shape = cross, size 3,3
-im_bw = cv.morphologyEx(im_bw, cv.MORPH_OPEN, kernel) # apply morph open
+    # gambar kotak lokasi plat nomor di citra RGB
+    cv.rectangle(img_show_plate,(x_plate,y_plate),(x_plate+w_plate,y_plate+h_plate),(0,255,0),5)
 
-# Character segmentation using contours
+    # crop citra plat 
+    img_plate_gray = img_gray[y_plate:y_plate+h_plate, x_plate:x_plate+w_plate]
 
-contours, hierarchy = cv.findContours(im_bw, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE) 
-idx = 0 # counter index of contour in contours
-index = [] # the character candidate will be stored here
-im_plate2 = im_plate.copy() # copy im_plate
+# # ==== Cek Deteksi Plat START ====
+# # Bisa di comment/uncomment
 
-# Get the character candidate
-#   if (the height in contours more than or equal to 40 pixels) and (less than or equal to 60 pixels)
-#   and if (the width more than or equal to 10 pixels)
+# fig2 = plt.figure(figsize=(10, 7)) 
+# row_fig = 2
+# column_fig = 1
 
-for contour in contours:
-    x,y,w,h = cv.boundingRect(contour)
-    if (h >= 40 and h <= 60) and (w >=10):
-        index.append(idx)
-    idx += 1
+# fig2.add_subplot(row_fig, column_fig, 1)
+# plt.imshow(cv.cvtColor(img_show_plate, cv.COLOR_BGR2RGB))
+# plt.axis('off')
+# plt.title("Lokasi Plat Nomor")
 
-# if there is no char candidate then print
-if index == []:
-    print('Chars not detected')
+# fig2.add_subplot(row_fig, column_fig, 2)
+# plt.imshow(img_plate_gray, cmap="gray")
+# plt.axis('off')
+# plt.title("Hasil Crop Plat Nomor")
+
+# plt.show()
+
+# # ==== Cek Deteksi Plat FINISH ====
+
+#----------------------------------------------------------------------------------------
+# █▀▀ █▀▀ █▀▀▀ █▀▄▀█ █▀▀ █▀▀▄ ▀▀█▀▀ █▀▀█ █▀▀ ░▀░ 　 █░█ █▀▀█ █▀▀█ █▀▀█ █░█ ▀▀█▀▀ █▀▀ █▀▀█ 
+# ▀▀█ █▀▀ █░▀█ █░▀░█ █▀▀ █░░█ ░░█░░ █▄▄█ ▀▀█ ▀█▀ 　 █▀▄ █▄▄█ █▄▄▀ █▄▄█ █▀▄ ░░█░░ █▀▀ █▄▄▀ 
+# ▀▀▀ ▀▀▀ ▀▀▀▀ ▀░░░▀ ▀▀▀ ▀░░▀ ░░▀░░ ▀░░▀ ▀▀▀ ▀▀▀ 　 ▀░▀ ▀░░▀ ▀░▀▀ ▀░░▀ ▀░▀ ░░▀░░ ▀▀▀ ▀░▀▀
+#----------------------------------------------------------------------------------------
+
+# karakter yang akan disegmentasi adalah baris pertama yang berisi nilai unik setiap kendaraan
+
+# konversi dari grayscale ke BW
+(thresh, img_plate_bw) = cv.threshold(img_plate_gray, 0, 255, cv.THRESH_BINARY + cv.THRESH_OTSU)
+
+# hasil dari konversi BW tidak terlalu mulus, 
+# ada bagian-bagian kecil yang tidak diinginkan yang mungkin bisa mengganggu
+# maka hilangkan area yang tidak diinginkan dengan operasi opening
+
+# buat kernel dengan bentuk cross dan ukuran 3x3
+kernel = cv.getStructuringElement(cv.MORPH_CROSS, (3,3))
+
+# lakukan operasi opening dengan kernel di atas
+img_plate_bw = cv.morphologyEx(img_plate_bw, cv.MORPH_OPEN, kernel) # apply morph open
+
+# Segmentasi karakter menggunakan contours
+# dapatkan kontur dari plat nomor
+contours_plate, hierarchy = cv.findContours(img_plate_bw, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE) 
+
+# index contour yang berisi kandidat karakter
+index_chars_candidate = [] #index
+
+# index counter dari setiap contour di contours_plate
+index_counter_contour_plate = 0 #idx
+
+# duplikat dan ubah citra plat dari gray ke rgb untuk menampilkan kotak karakter
+img_plate_rgb = cv.cvtColor(img_plate_gray,cv.COLOR_GRAY2BGR)
+
+# Mencari kandidat karakter
+for contour_plate in contours_plate:
+
+    # dapatkan lokasi x, y, nilai width, height dari setiap kontur plat
+    x_char,y_char,w_char,h_char = cv.boundingRect(contour_plate)
+    
+    # Dapatkan kandidat karakter jika:
+    #   tinggi kontur dalam rentang 40 - 60 piksel
+    #   dan lebarnya lebih dari atau sama dengan 10 piksel 
+    if h_char >= 40 and h_char <= 60 and w_char >=10:
+
+        # dapatkan index kandidat karakternya
+        index_chars_candidate.append(index_counter_contour_plate)
+
+        # gambar kotak untuk menandai kandidat karakter
+        cv.rectangle(img_plate_rgb,(x_char,y_char),(x_char+w_char,y_char+h_char),(0,255,0),5)
+
+    index_counter_contour_plate += 1
+
+# tampilkan kandidat karakter
+# cv.imshow('Kandidat Karakter',img_plate_rgb)
+
+if index_chars_candidate == []:
+
+    # tampilkan peringatan apabila tidak ada kandidat karakter
+    print('Karakter tidak tersegmentasi')
 else:
 
-    # Get the real character
-    #   the license plate numbers (character) have the same height in y axis.
-    #   so, compare the height of each candidate with the other candidates, 
-    #   if the difference is not more than 11 pixels then give 1 point to the score.
-    #   the real character will have the highest and the same score
+    # Mendapatkan yang benar-benar karakter
+    #   terkadang area lain yang bukan karakter ikut terpilih menjadi kandidat karakter
+    #   untuk menghilangkannya bisa dicek apakah sebaris dengan karakter plat nomor atau tidak
+    #
+    # Caranya dengan Scoring:
+    #   Bagian karakter plat nomor akan selalu sebaris, 
+    #       memiliki nilai y yang hampir sama atau tidak terlalu besar perbedaannya.
+    #       Maka bandingkan nilai y dari setiap kandidat satu dengan kandidat lainnya. 
+    #   Jika perbedaannya tidak lebih dari 11 piksel maka tambahkan score 1 point ke kandidat tersebut.
+    #       Kandidat yang benar-benar sebuah karakter akan memiliki nilai score yang sama dan tertinggi
 
     # Scoring
-    score = np.zeros(len(index))
-    c = 0
-    for a in index:
-        x1,y1,w1,h1 = cv.boundingRect(contours[a])
-        for b in index:
-            if a == b:
+
+    # untuk menyimpan skor setiap karakter pada kandidat
+    score_chars_candidate = np.zeros(len(index_chars_candidate))
+
+    # untuk counter index karakter
+    counter_index_chars_candidate = 0
+
+    # bandingkan lokasi y setiap kandidat satu dengan kandidat lainnya
+    for chars_candidateA in index_chars_candidate:
+        
+        # dapatkan nilai y dari kandidat A
+        xA,yA,wA,hA = cv.boundingRect(contours_plate[chars_candidateA])
+        for chars_candidateB in index_chars_candidate:
+
+            # jika kandidat yang dibandikan sama maka lewati
+            if chars_candidateA == chars_candidateB:
                 continue
             else:
-                x2,y2,w2,h2 = cv.boundingRect(contours[b])
-                ydiff = abs(y1 - y2)
-                if ydiff < 11:
-                    score[c] = score[c] + 1 
-        c += 1
+                # dapatkan nilai y dari kandidat B
+                xB,yB,wB,hB = cv.boundingRect(contours_plate[chars_candidateB])
 
-    # Get the highest and the same score
-    #   character will be stored in chars
+                # cari selisih nilai y kandidat A dan kandidat B
+                y_difference = abs(yA - yB)
 
-    chars = []
-    b = 0
-    for a in score:
-        if a == max(score):
-            chars.append(index[b])
-        b += 1
+                # jika perbedaannya kurang dari 11 piksel
+                if y_difference < 11:
+                    
+                    # tampahkan nilai score pada kandidat tersebut
+                    score_chars_candidate[counter_index_chars_candidate] = score_chars_candidate[counter_index_chars_candidate] + 1 
 
-    # Here, we've found the character, but..
-    # the arrangement is still random, for example: Z 1234 AB, the character stored: 1 3Z24 BA
-    # we have to sort those character by using x value
-    # sorted character will be stored to real_chars
+        # lanjut ke kandidat lain
+        counter_index_chars_candidate += 1
 
-    a = 0
-    xcoors = []
-    for char in chars:
-        x, y, w, h = cv.boundingRect(contours[char])
-        xcoors.append(x) # get the x value
+    # untuk menyimpan karakter
+    index_chars = []
 
-    xcoors = sorted(xcoors) # sort the x value (small --> large)
+    # counter karakter
+    chars_counter = 0
 
-    real_chars = []
-    for xcoor in xcoors:
-        for char in chars:
-            x, y, w, h = cv.boundingRect(contours[char])
-            if xcoors[xcoors.index(xcoor)] == x:
-                real_chars.append(char) # storing sorted character
+    # dapatkan karakter, yaitu yang memiliki score tertinggi
+    for score in score_chars_candidate:
+        if score == max(score_chars_candidate):
 
-    im_plate = cv.cvtColor(im_plate, cv.COLOR_GRAY2BGR)
+            # simpan yang benar-benar karakter
+            index_chars.append(index_chars_candidate[chars_counter])
+        chars_counter += 1
 
-    # Draw rectangle for each character
-    for rc in real_chars:
-        x,y,w,h = cv.boundingRect(contours[rc])
-        cv.rectangle(im_plate,(x,y),(x+w,y+h),(0,255,0),5)
-        cv.imshow('Character', im_plate) # show character in plate number
+    # Sampai disini sudah didapatkan karakternya
+    #   sayangnya karena ini menggunakan contours, 
+    #   urutan karakter masih berdasarkan letak sumbu y, dari atas ke bawah,
+    #   misal yang harusnya Z 1234 AB hasilnya malah 1 3Z24 BA.
+    #   Hal ini akan menjadi masalah ketika nanti proses klasifikasi karakter.
+    #   Maka mari disusun berdasarkan sumbu x, dari kiri ke kanan.
 
-#------------------------------------------------------
-# Character classification
-#------------------------------------------------------
+    # duplikat dan ubah ke rgb untuk menampilkan urutan karakter yang belum terurut
+    img_plate_rgb2 = cv.cvtColor(img_plate_gray, cv.COLOR_GRAY2BGR)
 
-    # i follow this instruction for image classification: 
+    # tampilkan urutan karakter yang belum terurut
+    for char in index_chars:
+        x, y, w, h = cv.boundingRect(contours_plate[char])
+        cv.rectangle(img_plate_rgb2,(x,y),(x+w,y+h),(0,255,0),5)
+        cv.putText(img_plate_rgb2, str(index_chars.index(char)),(x, y + h + 50), cv.FONT_ITALIC, 2.0, (0,0,255), 3)
+    
+    # tampilkan karakter yang belum terurut
+    # cv.imshow('Karakter Belum Terurut', img_plate_rgb2)
+
+    # Mulai mengurutkan
+
+    # untuk menyimpan koordinat x setiap karakter
+    x_coors = []
+
+    for char in index_chars:
+        # dapatkan nilai x
+        x, y, w, h = cv.boundingRect(contours_plate[char])
+
+        # dapatkan nilai sumbu x
+        x_coors.append(x)
+
+    # urutkan sumbu x dari terkecil ke terbesar
+    x_coors = sorted(x_coors)
+
+    # untuk menyimpan karakter
+    index_chars_sorted = []
+
+    # urutkan karakternya berdasarkan koordinat x yang sudah diurutkan
+    for x_coor in x_coors:
+        for char in index_chars:
+
+            # dapatkan nilai koordinat x karakter
+            x, y, w, h = cv.boundingRect(contours_plate[char])
+
+            # jika koordinat x terurut sama dengan koordinat x pada karakter
+            if x_coors[x_coors.index(x_coor)] == x:
+
+                # masukkan karakternya ke var baru agar mengurut dari kiri ke kanan
+                index_chars_sorted.append(char)
+
+    # duplikat dan ubah ke rgb untuk menampilkan yang benar-benar karakter
+    img_plate_rgb3 = cv.cvtColor(img_plate_gray, cv.COLOR_GRAY2BGR)
+
+    # Gambar kotak untuk menandai karakter yang terurut dan tambahkan teks urutannya
+    for char_sorted in index_chars_sorted:
+
+        # dapatkan nilai x, y, w, h dari karakter terurut
+        x,y,w,h = cv.boundingRect(contours_plate[char_sorted])
+
+        # gambar kotak yang menandai karakter terurut
+        cv.rectangle(img_plate_rgb3,(x,y),(x+w,y+h),(0,255,0),5)
+
+        # tambahkan teks urutan karakternya
+        cv.putText(img_plate_rgb3, str(index_chars_sorted.index(char_sorted)),(x, y + h + 50), cv.FONT_ITALIC, 2.0, (0,0,255), 3)
+    
+    # tampilkan hasil pengurutan
+    # cv.imshow('Karakter Terurut', img_plate_rgb3)
+
+    # # ==== Cek Segmentasi Karakter START ====
+    # # Bisa di comment/uncomment
+
+    # fig3 = plt.figure(figsize=(10, 7)) 
+    # row_fig = 1
+    # column_fig = 3
+
+    # fig3.add_subplot(row_fig, column_fig, 1)
+    # plt.imshow(cv.cvtColor(img_plate_rgb, cv.COLOR_BGR2RGB))
+    # plt.axis('off')
+    # plt.title("Kandidat Karakter")
+
+    # fig3.add_subplot(row_fig, column_fig, 2)
+    # plt.imshow(cv.cvtColor(img_plate_rgb2, cv.COLOR_BGR2RGB))
+    # plt.axis('off')
+    # plt.title("Karakter Belum Terurut")
+
+    # fig3.add_subplot(row_fig, column_fig, 3)
+    # plt.imshow(cv.cvtColor(img_plate_rgb3, cv.COLOR_BGR2RGB))
+    # plt.axis('off')
+    # plt.title("Karakter Terurut")
+
+    # plt.show()
+
+    # # ==== Cek Segmentasi Karakter FINISH ====
+
+    #---------------------------------------------------------------------------------------
+    # █░█ █░░ █▀▀█ █▀▀ ░▀░ █▀▀ ░▀░ █░█ █▀▀█ █▀▀ ░▀░ 　 █░█ █▀▀█ █▀▀█ █▀▀█ █░█ ▀▀█▀▀ █▀▀ █▀▀█ 
+    # █▀▄ █░░ █▄▄█ ▀▀█ ▀█▀ █▀▀ ▀█▀ █▀▄ █▄▄█ ▀▀█ ▀█▀ 　 █▀▄ █▄▄█ █▄▄▀ █▄▄█ █▀▄ ░░█░░ █▀▀ █▄▄▀ 
+    # ▀░▀ ▀▀▀ ▀░░▀ ▀▀▀ ▀▀▀ ▀░░ ▀▀▀ ▀░▀ ▀░░▀ ▀▀▀ ▀▀▀ 　 ▀░▀ ▀░░▀ ▀░▀▀ ▀░░▀ ▀░▀ ░░▀░░ ▀▀▀ ▀░▀▀
+    #---------------------------------------------------------------------------------------
+
+    # untuk mengklasifikasi karakter, saya menggunakan tutorial:
     # https://www.tensorflow.org/tutorials/images/classification
-    # the classification result will be stored to plate_number
+    # hasil klasifikasi akan tersimpan di var plate_number
 
-    img_height = 40 # image height
-    img_width = 40 # image width
+    # tinggi dan lebar citra untuk test
+    img_height = 40 
+    img_width = 40
 
+    # klas karakter
     class_names = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
 
-    model = keras.models.load_model('my_model') # load model
+    # load model yang sudah terlatih
+    model = keras.models.load_model('my_model')
 
+    # untuk menyimpan string karakter
     num_plate = []
 
-    for rc in real_chars:
-        x,y,w,h = cv.boundingRect(contours[rc])
-        char_crop = cv.cvtColor(im_bw[y:y+h,x:x+w], cv.COLOR_GRAY2BGR)
+    for char_sorted in index_chars_sorted:
+        x,y,w,h = cv.boundingRect(contours_plate[char_sorted])
 
+        # potong citra karakter
+        char_crop = cv.cvtColor(img_plate_bw[y:y+h,x:x+w], cv.COLOR_GRAY2BGR)
+
+        # resize citra karakternya
         char_crop = cv.resize(char_crop, (img_width, img_height))
 
+        # preprocessing citra ke numpy array
         img_array = keras.preprocessing.image.img_to_array(char_crop)
+
+        # agar shape menjadi [1, h, w, channels]
         img_array = tf.expand_dims(img_array, 0)
 
-        predictions = model.predict(img_array) # make predictions
+        # buat prediksi
+        predictions = model.predict(img_array)
         score = tf.nn.softmax(predictions[0]) 
 
         num_plate.append(class_names[np.argmax(score)])
         print(class_names[np.argmax(score)], end='')
 
-    # Show the result
-
+    # Gabungkan string pada list
     plate_number = ''
     for a in num_plate:
         plate_number += a
 
-    cv.putText(img, plate_number,(xp, yp + hp + 50), cv.FONT_ITALIC, 2.0, (0,255,0), 3)
+    # Hasil deteksi dan pembacaan
+    cv.putText(img, plate_number,(x_plate, y_plate + h_plate + 50), cv.FONT_ITALIC, 2.0, (0,255,0), 3)
     cv.imshow(plate_number, img)
-    cv.waitKey(0)
+cv.waitKey(0)
