@@ -12,7 +12,7 @@ from tensorflow import keras
 #---------------------------------------------------------------
 
 # load citra RGB (BGR)
-img = cv.imread(r'E:\PYTHON\Final Project\test images\AA5627JT.jpg')
+img = cv.imread(r'E:\PYTHON\Final Project\test images\AB2638XU.jpg')
 
 # resize citra dengan mengalikannya ukuran aslinya dengan 0.4
 # contoh: 1920 x 2560 ==> 1920 x 0.4 = 768 ; 2560 x 0.4 = 1024 ==> hasilnya 768 x 1024
@@ -44,35 +44,40 @@ img_norm = img_gray - img_opening
 # konversi citra hasil normalisasi ke citra BW (hitam putih)
 (thresh, img_norm_bw) = cv.threshold(img_norm, 0, 255, cv.THRESH_BINARY + cv.THRESH_OTSU)
 
-# # ==== Cek normalisasi START ====
-# # Untuk ngecek hasil sebelum dan sesudah dilakukan normalisasi
-# # Bisa di comment/uncomment
+# ==== Cek normalisasi START ====
+# Untuk ngecek hasil sebelum dan sesudah dilakukan normalisasi
+# Bisa di comment/uncomment
 
-# # buat citra bw tanpa normalisasi
-# (thresh, img_without_norm_bw) = cv.threshold(img_gray, 0, 255, cv.THRESH_BINARY + cv.THRESH_OTSU)
+# buat citra bw tanpa normalisasi
+(thresh, img_without_norm_bw) = cv.threshold(img_gray, 0, 255, cv.THRESH_BINARY + cv.THRESH_OTSU)
 
-# fig = plt.figure(figsize=(10, 7)) 
-# row_fig = 1
-# column_fig = 3
+fig = plt.figure(figsize=(10, 7)) 
+row_fig = 2
+column_fig = 2
 
-# fig.add_subplot(row_fig, column_fig, 1)
-# plt.imshow(img_gray, cmap='gray')
-# plt.axis('off')
-# plt.title("Grayscale")
+fig.add_subplot(row_fig, column_fig, 1)
+plt.imshow(cv.cvtColor(img, cv.COLOR_BGR2RGB))
+plt.axis('off')
+plt.title("RGB")
 
-# fig.add_subplot(row_fig, column_fig, 2)
-# plt.imshow(img_without_norm_bw, cmap='gray')
-# plt.axis('off')
-# plt.title("Tanpa Normalisasi")
+fig.add_subplot(row_fig, column_fig, 2)
+plt.imshow(img_gray, cmap='gray')
+plt.axis('off')
+plt.title("Grayscale")
 
-# fig.add_subplot(row_fig, column_fig, 3)
-# plt.imshow(img_norm_bw, cmap='gray')
-# plt.axis('off')
-# plt.title("Dengan Normalisasi")
+fig.add_subplot(row_fig, column_fig, 3)
+plt.imshow(img_without_norm_bw, cmap='gray')
+plt.axis('off')
+plt.title("Tanpa Normalisasi")
 
-# plt.show()
+fig.add_subplot(row_fig, column_fig, 4)
+plt.imshow(img_norm_bw, cmap='gray')
+plt.axis('off')
+plt.title("Dengan Normalisasi")
 
-# # ==== Cek normalisasi FINISH ====
+plt.show()
+
+# ==== Cek normalisasi FINISH ====
 
 #------------------------------------------------------
 # █▀▀▄ █▀▀ ▀▀█▀▀ █▀▀ █░█ █▀▀ ░▀░ 　 █▀▀█ █░░ █▀▀█ ▀▀█▀▀ 
@@ -119,8 +124,9 @@ for contour_vehicle in contours_vehicle:
 #   jika mendapatkan dua lokasi plat, berdasarkan observasi, pilih plat kedua karena ukurannya yang lebih pas
 #
 
-# buat duplikat citra RGB kendaraan untuk menampilkan lokasi plat
+# buat duplikat citra RGB dan BW kendaraan untuk menampilkan lokasi plat
 img_show_plate = img.copy() 
+img_show_plate_bw = cv.cvtColor(img_norm_bw, cv.COLOR_GRAY2RGB)
 
 if len(index_plate_candidate) == 0:
 
@@ -136,6 +142,9 @@ elif len(index_plate_candidate) == 1:
     # gambar kotak lokasi plat nomor di citra RGB
     cv.rectangle(img_show_plate,(x_plate,y_plate),(x_plate+w_plate,y_plate+h_plate),(0,255,0),5)
 
+    # gambar kotak lokasi plat nomor di citra BW
+    cv.rectangle(img_show_plate_bw,(x_plate,y_plate),(x_plate+w_plate,y_plate+h_plate),(0,255,0),5)
+
     # crop citra plat 
     img_plate_gray = img_gray[y_plate:y_plate+h_plate, x_plate:x_plate+w_plate]
 else:
@@ -147,29 +156,37 @@ else:
     # gambar kotak lokasi plat nomor di citra RGB
     cv.rectangle(img_show_plate,(x_plate,y_plate),(x_plate+w_plate,y_plate+h_plate),(0,255,0),5)
 
+    # gambar kotak lokasi plat nomor di citra BW
+    cv.rectangle(img_show_plate_bw,(x_plate,y_plate),(x_plate+w_plate,y_plate+h_plate),(0,255,0),5)
+
     # crop citra plat 
     img_plate_gray = img_gray[y_plate:y_plate+h_plate, x_plate:x_plate+w_plate]
 
-# # ==== Cek Deteksi Plat START ====
-# # Bisa di comment/uncomment
+# ==== Cek Deteksi Plat START ====
+# Bisa di comment/uncomment
 
-# fig2 = plt.figure(figsize=(10, 7)) 
-# row_fig = 2
-# column_fig = 1
+fig2 = plt.figure(figsize=(10, 7)) 
+row_fig = 2
+column_fig = 2
 
-# fig2.add_subplot(row_fig, column_fig, 1)
-# plt.imshow(cv.cvtColor(img_show_plate, cv.COLOR_BGR2RGB))
-# plt.axis('off')
-# plt.title("Lokasi Plat Nomor")
+fig2.add_subplot(row_fig, column_fig, 1)
+plt.imshow(cv.cvtColor(img_show_plate_bw, cv.COLOR_BGR2RGB))
+plt.axis('off')
+plt.title("Lokasi Plat Nomor BW")
 
-# fig2.add_subplot(row_fig, column_fig, 2)
-# plt.imshow(img_plate_gray, cmap="gray")
-# plt.axis('off')
-# plt.title("Hasil Crop Plat Nomor")
+fig2.add_subplot(row_fig, column_fig, 2)
+plt.imshow(cv.cvtColor(img_show_plate, cv.COLOR_BGR2RGB))
+plt.axis('off')
+plt.title("Lokasi Plat Nomor")
 
-# plt.show()
+fig2.add_subplot(row_fig, column_fig, 3)
+plt.imshow(img_plate_gray, cmap="gray")
+plt.axis('off')
+plt.title("Hasil Crop Plat Nomor")
 
-# # ==== Cek Deteksi Plat FINISH ====
+plt.show()
+
+# ==== Cek Deteksi Plat FINISH ====
 
 #----------------------------------------------------------------------------------------
 # █▀▀ █▀▀ █▀▀▀ █▀▄▀█ █▀▀ █▀▀▄ ▀▀█▀▀ █▀▀█ █▀▀ ░▀░ 　 █░█ █▀▀█ █▀▀█ █▀▀█ █░█ ▀▀█▀▀ █▀▀ █▀▀█ 
@@ -189,8 +206,12 @@ else:
 # buat kernel dengan bentuk cross dan ukuran 3x3
 kernel = cv.getStructuringElement(cv.MORPH_CROSS, (3,3))
 
+# cv.imshow("sebelum open", img_plate_bw)
+
 # lakukan operasi opening dengan kernel di atas
 img_plate_bw = cv.morphologyEx(img_plate_bw, cv.MORPH_OPEN, kernel) # apply morph open
+
+# cv.imshow("sesudah open", img_plate_bw)
 
 # Segmentasi karakter menggunakan contours
 # dapatkan kontur dari plat nomor
@@ -202,8 +223,9 @@ index_chars_candidate = [] #index
 # index counter dari setiap contour di contours_plate
 index_counter_contour_plate = 0 #idx
 
-# duplikat dan ubah citra plat dari gray ke rgb untuk menampilkan kotak karakter
+# duplikat dan ubah citra plat dari gray dan bw ke rgb untuk menampilkan kotak karakter
 img_plate_rgb = cv.cvtColor(img_plate_gray,cv.COLOR_GRAY2BGR)
+img_plate_bw_rgb = cv.cvtColor(img_plate_bw, cv.COLOR_GRAY2RGB)
 
 # Mencari kandidat karakter
 for contour_plate in contours_plate:
@@ -221,6 +243,7 @@ for contour_plate in contours_plate:
 
         # gambar kotak untuk menandai kandidat karakter
         cv.rectangle(img_plate_rgb,(x_char,y_char),(x_char+w_char,y_char+h_char),(0,255,0),5)
+        cv.rectangle(img_plate_bw_rgb,(x_char,y_char),(x_char+w_char,y_char+h_char),(0,255,0),5)
 
     index_counter_contour_plate += 1
 
@@ -277,6 +300,8 @@ else:
 
         # lanjut ke kandidat lain
         counter_index_chars_candidate += 1
+
+    print(score_chars_candidate)
 
     # untuk menyimpan karakter
     index_chars = []
@@ -360,31 +385,36 @@ else:
     # tampilkan hasil pengurutan
     # cv.imshow('Karakter Terurut', img_plate_rgb3)
 
-    # # ==== Cek Segmentasi Karakter START ====
-    # # Bisa di comment/uncomment
+    # ==== Cek Segmentasi Karakter START ====
+    # Bisa di comment/uncomment
 
-    # fig3 = plt.figure(figsize=(10, 7)) 
-    # row_fig = 1
-    # column_fig = 3
+    fig3 = plt.figure(figsize=(10, 7)) 
+    row_fig = 2
+    column_fig = 2
 
-    # fig3.add_subplot(row_fig, column_fig, 1)
-    # plt.imshow(cv.cvtColor(img_plate_rgb, cv.COLOR_BGR2RGB))
-    # plt.axis('off')
-    # plt.title("Kandidat Karakter")
+    fig3.add_subplot(row_fig, column_fig, 1)
+    plt.imshow(img_plate_bw_rgb)
+    plt.axis('off')
+    plt.title("Kandidat Karakter BW")
 
-    # fig3.add_subplot(row_fig, column_fig, 2)
-    # plt.imshow(cv.cvtColor(img_plate_rgb2, cv.COLOR_BGR2RGB))
-    # plt.axis('off')
-    # plt.title("Karakter Belum Terurut")
+    fig3.add_subplot(row_fig, column_fig, 2)
+    plt.imshow(cv.cvtColor(img_plate_rgb, cv.COLOR_BGR2RGB))
+    plt.axis('off')
+    plt.title("Kandidat Karakter")
 
-    # fig3.add_subplot(row_fig, column_fig, 3)
-    # plt.imshow(cv.cvtColor(img_plate_rgb3, cv.COLOR_BGR2RGB))
-    # plt.axis('off')
-    # plt.title("Karakter Terurut")
+    fig3.add_subplot(row_fig, column_fig, 3)
+    plt.imshow(cv.cvtColor(img_plate_rgb2, cv.COLOR_BGR2RGB))
+    plt.axis('off')
+    plt.title("Karakter Belum Terurut")
 
-    # plt.show()
+    fig3.add_subplot(row_fig, column_fig, 4)
+    plt.imshow(cv.cvtColor(img_plate_rgb3, cv.COLOR_BGR2RGB))
+    plt.axis('off')
+    plt.title("Karakter Terurut")
 
-    # # ==== Cek Segmentasi Karakter FINISH ====
+    plt.show()
+
+    # ==== Cek Segmentasi Karakter FINISH ====
 
     #---------------------------------------------------------------------------------------
     # █░█ █░░ █▀▀█ █▀▀ ░▀░ █▀▀ ░▀░ █░█ █▀▀█ █▀▀ ░▀░ 　 █░█ █▀▀█ █▀▀█ █▀▀█ █░█ ▀▀█▀▀ █▀▀ █▀▀█ 
@@ -437,6 +467,6 @@ else:
         plate_number += a
 
     # Hasil deteksi dan pembacaan
-    cv.putText(img, plate_number,(x_plate, y_plate + h_plate + 50), cv.FONT_ITALIC, 2.0, (0,255,0), 3)
-    cv.imshow(plate_number, img)
+    cv.putText(img_show_plate, plate_number,(x_plate, y_plate + h_plate + 50), cv.FONT_ITALIC, 2.0, (0,255,0), 3)
+    cv.imshow(plate_number, img_show_plate)
 cv.waitKey(0)
