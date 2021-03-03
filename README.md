@@ -2,8 +2,9 @@
 Automatic License Plate Recognition for Indonesia Plate Number<br>
 
 ## Methods
+- Preprocess
 - Plate detection and characters segmentation on vehicle images are using contours.<br>
-- For images/characters classification, I follow [this instruction](https://www.tensorflow.org/tutorials/images/classification)
+- For images/characters classification, I follow [Tensorflow tutorial](https://www.tensorflow.org/tutorials/images/classification)
 
 ### Results
 - 58/62 plates detected
@@ -12,7 +13,7 @@ Automatic License Plate Recognition for Indonesia Plate Number<br>
 ### Suggestions:
 - For better detection result, you can do some experiments with preprocessing and contours.<br>
 - For better classification result, you can separate the plate number characters into three parts, the first letter, the second number, and the third letter;<br>
-- And you can add more training datasets. 
+- You can add more training datasets.
 
 ### Good Results
 
@@ -43,6 +44,7 @@ Automatic License Plate Recognition for Indonesia Plate Number<br>
 - OpenCV 4.5.1
 - NumPy 1.19.4
 - Tensorflow 2.4.0
+- Matplotlib
 
 ## Test Image Requirements
 - Resolution 2560 x 1920 pixels
