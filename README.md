@@ -62,4 +62,4 @@ Automatic License Plate Recognition for Indonesia Plate Number<br>
 - You can add another character dataset to the dataset folder for better result
 
 ## Explanation
-https://www.kangghani.com/2021/02/Deteksi%20Membaca%20Plat%20Nomor%20Kendaraan%20Python.html
+https://www.kangghani.com/2021/02/deteksi-dan-membaca-plat-kendaraan-otomatis-python.html
