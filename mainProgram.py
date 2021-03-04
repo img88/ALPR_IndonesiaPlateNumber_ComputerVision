@@ -299,7 +299,7 @@ else:
                 # jika perbedaannya kurang dari 11 piksel
                 if y_difference < 11:
                     
-                    # tampahkan nilai score pada kandidat tersebut
+                    # tambahkan nilai score pada kandidat tersebut
                     score_chars_candidate[counter_index_chars_candidate] = score_chars_candidate[counter_index_chars_candidate] + 1 
 
         # lanjut ke kandidat lain
