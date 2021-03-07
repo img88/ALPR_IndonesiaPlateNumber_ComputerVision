@@ -7,7 +7,7 @@ Automatic License Plate Recognition for Indonesia Plate Number<br>
 - For images/characters classification, I follow [Tensorflow tutorial](https://www.tensorflow.org/tutorials/images/classification)
 
 ### Results
-- 58/62 plates detected
+- 58/6o plates detected
 - Sometimes get wrong classification result for similar shaped characters, examples: 1 <--> T <--> I, 2 <--> Z
 
 ### Suggestions:
